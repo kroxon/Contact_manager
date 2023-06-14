@@ -16,24 +16,31 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.contactmanager.adapter.InfoAdapter;
 import com.example.contactmanager.db.ContactsAppDatabase;
 import com.example.contactmanager.db.entity.Contact;
 import com.example.contactmanager.adapter.ContactsAdapter;
+import com.example.contactmanager.db.entity.Information;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
 
     // Variables
     private ContactsAdapter contactsAdapter;
+    private InfoAdapter infoAdapter;
     private ArrayList<Contact> contactArrayList  = new ArrayList<>();
+    private ArrayList<Information> informationArrayList  = new ArrayList<>();
     private RecyclerView recyclerView;
+    private RecyclerView recyclerView2;
     private ContactsAppDatabase contactsAppDatabase;
 
 
@@ -51,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
         // RecyclerVIew
         recyclerView = findViewById(R.id.recycler_view_contacts);
+        recyclerView2 = findViewById(R.id.recycler_view_info);
 
         // Database
         contactsAppDatabase = Room.databaseBuilder(
@@ -69,11 +77,27 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(contactsAdapter);
 
+        informationArrayList.addAll(contactsAppDatabase.getInfoDAO().getAllInfo());
+
+        infoAdapter = new InfoAdapter(this, informationArrayList,MainActivity.this);
+        RecyclerView.LayoutManager layoutManager2 = new LinearLayoutManager(getApplicationContext());
+        recyclerView2.setLayoutManager(layoutManager2);
+        recyclerView2.setItemAnimator(new DefaultItemAnimator());
+        recyclerView2.setAdapter(infoAdapter);
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 addAndEditContacts(false, null, -1);
+            }
+        });
+
+        Button btn = (Button) findViewById(R.id.btnRandom);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                CreateInfo(randomNumber());
             }
         });
     }
@@ -182,7 +206,37 @@ public class MainActivity extends AppCompatActivity {
             contactArrayList.add(0, contact);
             contactsAdapter.notifyDataSetChanged();
         }
+    }
 
+    private void CreateInfo(String number){
+
+        long id = contactsAppDatabase.getInfoDAO()
+                .addInfo(new Information(number,0));
+
+        Information information = contactsAppDatabase.getInfoDAO().getInfo(id);
+
+        if (information != null){
+            informationArrayList.add(0, information);
+            infoAdapter.notifyDataSetChanged();
+        }
+    }
+
+    public void UpdateInfo(int position){
+        Information information = informationArrayList.get(position);
+
+        information.setNumber(randomNumber());
+
+        contactsAppDatabase.getInfoDAO().updateInfo(information);
+
+        informationArrayList.set(position, information);
+        infoAdapter.notifyDataSetChanged();
+    }
+
+    public void DeleteInfo(int position) {
+        Information information = informationArrayList.get(position);
+        informationArrayList.remove(position);
+        contactsAppDatabase.getInfoDAO().deleteInfo(information);
+        infoAdapter.notifyDataSetChanged();
     }
 
 
@@ -202,4 +256,12 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+    public String randomNumber() {
+        Random random = new Random();
+        int n = random.nextInt(100);
+        return String.valueOf(n);
+    }
+
+
 }
