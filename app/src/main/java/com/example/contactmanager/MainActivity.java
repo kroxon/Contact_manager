@@ -75,22 +75,20 @@ public class MainActivity extends AppCompatActivity {
                         getApplicationContext(),
                         AppDatabase.class,
                         "ContactDB")
-                .addCallback(myCallback)
+//                .addCallback(myCallback)
+                .allowMainThreadQueries()
                 .build();
 
         // display in background
         displayAllDataInBackground();
 
         // Displaying All Contacts List
-//        contactArrayList.addAll(contactsAppDatabase.getContactDAO().getContacts());
 
         contactsAdapter = new ContactsAdapter(this, contactArrayList,MainActivity.this);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(contactsAdapter);
-
-//        informationArrayList.addAll(contactsAppDatabase.getInfoDAO().getAllInfo());
 
         infoAdapter = new InfoAdapter(this, informationArrayList,MainActivity.this);
         RecyclerView.LayoutManager layoutManager2 = new LinearLayoutManager(getApplicationContext());
@@ -300,17 +298,25 @@ public class MainActivity extends AppCompatActivity {
         return String.valueOf(n);
     }
 
+    // Callbacks
     RoomDatabase.Callback  myCallback = new RoomDatabase.Callback() {
+
+        @Override
+        public void onDestructiveMigration(@NonNull SupportSQLiteDatabase db) {
+            super.onDestructiveMigration(db);
+            CreateContact("John", "john@o2.pl");
+            CreateInfo("44");
+        }
+
         @Override
         public void onCreate(@NonNull SupportSQLiteDatabase db) {
             super.onCreate(db);
 
-            CreateContact("John", "john@o2.pl");
-            CreateInfo("44");
+//            CreateContact("John", "john@o2.pl");
+//            CreateInfo("44");
 
             Log.i("TAG", "Create db");
         }
-
         @Override
         public void onOpen(@NonNull SupportSQLiteDatabase db) {
             super.onOpen(db);
